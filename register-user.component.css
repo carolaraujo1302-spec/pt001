@@ -1,0 +1,194 @@
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+
+import { Produto } from '../../models/produto';
+import { ProdutoService } from '../../services/produto.service';
+
+@Component({
+  selector: 'app-produto-edit',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
+  templateUrl: './produto-edit.component.html',
+  styleUrls: ['./produto-edit.component.css']
+})
+export class ProdutoEditComponent implements OnInit {
+  id!: number;
+  produto: Produto | null = null;
+
+
+
+  nome = '';
+  marca = '';
+  dataFabricacao = '';
+  dataValidade = '';
+  preco: number | null = null;
+  quantidadeEstoque: number | null = null;
+
+  loading = false;
+  saving = false;
+  errorMessage = '';
+  successMessage = '';
+
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private produtoService: ProdutoService,
+    private cdr: ChangeDetectorRef
+  ) { }
+
+  ngOnInit(): void {
+
+    const rawId = this.route.snapshot.paramMap.get('id');
+
+    console.log('[ProdutoEdit] rawId=', rawId);
+
+    if (!rawId) {
+      this.errorMessage = 'ID inválido';
+      return;
+    }
+
+    this.id = Number(rawId);
+
+    if (Number.isNaN(this.id)) {
+      this.errorMessage = 'ID inválido';
+      return;
+    }
+
+    this.carregar();
+  }
+
+
+
+  carregar(): void {
+
+    console.log('[ProdutoEdit] carregando id=', this.id);
+
+    this.produtoService.getProdutoById(this.id).subscribe({
+
+      next: (data) => {
+
+        console.log('[ProdutoEdit] produto recebido=', data);
+
+        this.produto = data;
+
+        this.nome = data.nome;
+        this.marca = data.marca;
+        this.dataFabricacao = data.dataFabricacao;
+        this.dataValidade = data.dataValidade;
+        this.preco = data.preco;
+        this.quantidadeEstoque = data.quantidadeEstoque;
+
+
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        this.errorMessage = 'Erro ao carregar produto.';
+        this.loading = false;
+      }
+    });
+  }
+
+
+  private validar(): string[] {
+    const errors: string[] = [];
+
+    if (!this.nome.trim()) errors.push('Nome é obrigatório.');
+    if (!this.marca.trim()) errors.push('Marca é obrigatória.');
+    if (!this.dataFabricacao) errors.push('Data de fabricação é obrigatória.');
+    if (!this.dataValidade) errors.push('Data de validade é obrigatória.');
+
+    if (this.preco === null || this.preco === undefined || Number.isNaN(this.preco)) {
+      errors.push('Preço é obrigatório.');
+    } else if (this.preco < 0) {
+      errors.push('Preço não pode ser negativo.');
+    }
+
+    if (this.dataFabricacao && this.dataValidade) {
+      const fabr = new Date(this.dataFabricacao);
+      const val = new Date(this.dataValidade);
+      if (val.getTime() <= fabr.getTime()) {
+        errors.push('Data de validade deve ser maior que a data de fabricação.');
+      }
+    }
+
+    if (this.quantidadeEstoque === null || this.quantidadeEstoque === undefined || Number.isNaN(this.quantidadeEstoque)) {
+      errors.push('Quantidade em estoque é obrigatória.');
+    } else {
+      if (this.quantidadeEstoque < 0) errors.push('Quantidade em estoque não pode ser negativa.');
+    }
+
+    return errors;
+  }
+
+  private formatarTexto(texto: string): string {
+
+    return texto
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .map(palavra =>
+        palavra.charAt(0).toUpperCase() + palavra.slice(1)
+      )
+      .join(' ');
+  }
+
+
+  onSave(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const errors = this.validar();
+    if (errors.length) {
+      this.errorMessage = errors.join(' ');
+      return;
+    }
+
+    if (!this.produto) return;
+
+    const atualizado: Produto = {
+      ...this.produto,
+      nome: this.formatarTexto(this.nome),
+      marca: this.formatarTexto(this.marca),
+      dataFabricacao: this.dataFabricacao,
+      dataValidade: this.dataValidade,
+      preco: Number(this.preco),
+      quantidadeEstoque: Number(this.quantidadeEstoque)
+    };
+
+    this.saving = true;
+
+    this.produtoService.updateProduto(this.id, atualizado).subscribe({
+      next: () => {
+
+        this.successMessage = 'Produto atualizado com sucesso!';
+        this.saving = false;
+
+        this.router.navigateByUrl('/', { replaceUrl: true });
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        this.errorMessage = 'Erro ao salvar alterações.';
+        this.saving = false;
+      }
+    });
+  }
+
+  cancelar(): void {
+    this.router.navigateByUrl('/', { replaceUrl: true });
+  }
+}
+

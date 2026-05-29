@@ -1,0 +1,138 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+
+import { Produto } from '../../models/produto';
+import { ProdutoService } from '../../services/produto.service';
+
+@Component({
+  selector: 'app-produto-list',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './produto-list.component.html',
+  styleUrl: './produto-list.component.css'
+})
+export class ProdutoListComponent implements OnInit {
+  produtos: Produto[] = [];
+  produtosFiltrados: Produto[] = [];
+  loading = false;
+  errorMessage = '';
+  successMessage = '';
+
+  buscaNome = '';
+  marcaFiltro = '';
+  marcas: string[] = [];
+
+  constructor(
+    private produtoService: ProdutoService,
+    private router: Router
+  ) { }
+
+  ngOnInit(): void {
+    this.carregarProdutos();
+  }
+
+  carregarProdutos(): void {
+
+    this.loading = true;
+
+    this.produtoService.getProdutos().subscribe({
+
+      next: (data) => {
+
+        console.log(
+          '[ProdutoList] produtos recebidos:',
+          data
+        );
+
+        this.produtos = [...data];
+        this.filtrarProdutos();
+
+        // monta lista de marcas
+        this.marcas = [
+          ...new Set(
+            data.map(p => p.marca)
+          )
+        ];
+
+        this.loading = false;
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        this.errorMessage =
+          'Erro ao carregar produtos.';
+
+        this.loading = false;
+      }
+    });
+  }
+
+  filtrarProdutos(): void {
+
+    const nome = this.buscaNome
+      .trim()
+      .toLowerCase();
+
+    const marca = this.marcaFiltro
+      .trim()
+      .toLowerCase();
+
+    this.produtosFiltrados =
+      this.produtos.filter((p) => {
+
+        const okNome =
+          !nome ||
+          p.nome.toLowerCase().includes(nome);
+
+        const okMarca =
+          !marca ||
+          p.marca.toLowerCase() === marca;
+
+        return okNome && okMarca;
+      });
+  }
+
+  isVencido(p: Produto): boolean {
+    const hoje = new Date();
+    const validade = new Date(p.dataValidade);
+    return validade.getTime() < new Date(hoje.toDateString()).getTime();
+  }
+
+
+
+  confirmarEExcluir(id: number): void {
+    const produto = this.produtos.find((p) => p.id === id);
+    const ok = window.confirm(`Confirma excluir o produto "${produto?.nome ?? id}"?`);
+    if (!ok) return;
+
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.loading = true;
+
+    this.produtoService.deleteProduto(id).subscribe({
+      next: () => {
+        this.successMessage = 'Produto excluído com sucesso!';
+        this.carregarProdutos();
+      },
+      error: (err) => {
+        this.errorMessage = 'Erro ao excluir produto.';
+        console.error(err);
+        this.loading = false;
+      }
+    });
+  }
+
+
+  navegarDetalhes(id: number): void {
+    this.router.navigate(['/details', id]);
+  }
+
+  navegarEditar(id: number): void {
+    this.router.navigate(['/edit', id]);
+  }
+}
+

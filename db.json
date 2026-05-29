@@ -1,0 +1,96 @@
+{
+  "produtos": [
+    {
+      "id": "1",
+      "nome": "Feijão",
+      "marca": "Camil",
+      "dataFabricacao": "2025-04-20",
+      "dataValidade": "2026-04-20",
+      "preco": 18.5,
+      "quantidadeEstoque": 10
+    },
+    {
+      "id": "2",
+      "nome": "Macarrão",
+      "marca": "Adria",
+      "dataFabricacao": "2026-05-05",
+      "dataValidade": "2027-05-26",
+      "preco": 3.15,
+      "quantidadeEstoque": 300
+    },
+    {
+      "id": "3",
+      "nome": "Arroz",
+      "marca": "Tio João",
+      "dataFabricacao": "2020-01-10",
+      "dataValidade": "2027-02-10",
+      "preco": 25,
+      "quantidadeEstoque": 50
+    },
+    {
+      "id": "4",
+      "nome": "Macarrão",
+      "marca": "Dona Benta",
+      "dataFabricacao": "2025-04-26",
+      "dataValidade": "2026-04-28",
+      "preco": 1.99,
+      "quantidadeEstoque": 10
+    },
+    {
+      "nome": "Massa De Tomate",
+      "marca": "Adria",
+      "dataFabricacao": "2026-05-01",
+      "dataValidade": "2026-07-30",
+      "preco": 2.99,
+      "quantidadeEstoque": 15,
+      "id": 9
+    }
+  ],
+  "usuarios": [
+    {
+      "id": 1,
+      "nome": "Admin",
+      "email": "admin@smartstock.com",
+      "senha": "mudar123",
+      "role": "admin",
+      "cpf": "111.111.111-01",
+      "macroSetor": "São Paulo",
+      "status": "ativo",
+      "criadoEm": ""
+    },
+    {
+      "id": 2,
+      "nome": "Usuario Demo",
+      "email": "user@smartstock.com",
+      "senha": "Mudar1234",
+      "role": "user",
+      "cpf": "000.000.000-11",
+      "macroSetor": "Rio De Janeiro",
+      "status": "ativo",
+      "criadoEm": ""
+    },
+    {
+      "nome": "Maria",
+      "cpf": "000.000.000-10",
+      "email": "maria124@smartstock.com",
+      "macroSetor": "São Paulo",
+      "status": "inativo",
+      "criadoEm": "2026-05-28T03:23:09.601Z",
+      "senha": "mudar123",
+      "role": "user",
+      "id": 4
+    },
+    {
+      "id": 5,
+      "nome": "José",
+      "cpf": "000.000.000-15",
+      "email": "jose.martins@smartstock.com",
+      "macroSetor": "Tocantins",
+      "status": "ativo",
+      "criadoEm": "2026-05-28T06:39:07.184Z",
+      "senha": "mudar123",
+      "role": "admin"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

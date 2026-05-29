@@ -1,0 +1,60 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+
+import { Produto } from '../../models/produto';
+import { ProdutoService } from '../../services/produto.service';
+
+@Component({
+  selector: 'app-produto-details',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  templateUrl: './produto-details.component.html',
+  styleUrl: './produto-details.component.css'
+})
+export class ProdutoDetailsComponent implements OnInit {
+  id!: number;
+  produto: Produto | null = null;
+  loading = true;
+  errorMessage = '';
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private produtoService: ProdutoService
+  ) {}
+
+  ngOnInit(): void {
+    this.id = Number(this.route.snapshot.paramMap.get('id'));
+    this.carregar();
+  }
+
+  carregar(): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.produtoService.getProdutoById(this.id).subscribe({
+      next: (data) => {
+        this.produto = data;
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.errorMessage = 'Produto não encontrado.';
+        this.loading = false;
+      }
+    });
+  }
+
+  isVencido(): boolean {
+    if (!this.produto) return false;
+    const hoje = new Date();
+    const validade = new Date(this.produto.dataValidade);
+    return validade.getTime() < new Date(hoje.toDateString()).getTime();
+  }
+
+  voltar(): void {
+    this.router.navigate(['/']);
+  }
+}
+

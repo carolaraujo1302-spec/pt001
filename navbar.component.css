@@ -1,0 +1,153 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+
+import { UsuarioService } from '../../services/usuario.service';
+
+@Component({
+  selector: 'app-forgot-password',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './forgot-password.component.html',
+  styleUrl: './forgot-password.component.css'
+})
+export class ForgotPasswordComponent {
+
+  email = '';
+  novaSenha = '';
+  confirmarNovaSenha = '';
+
+  loading = false;
+  errorMessage = '';
+  successMessage = '';
+
+  constructor(
+    private usuarioService: UsuarioService,
+    public router: Router
+  ) {}
+
+  private validar(): string[] {
+
+    const errors: string[] = [];
+
+    if (!this.email.trim()) {
+      errors.push('Informe o e-mail.');
+    }
+
+    if (!this.novaSenha) {
+      errors.push('Informe a nova senha.');
+    }
+
+    if (!this.confirmarNovaSenha) {
+      errors.push('Confirme a nova senha.');
+    }
+
+    if (
+      this.novaSenha &&
+      this.confirmarNovaSenha &&
+      this.novaSenha !== this.confirmarNovaSenha
+    ) {
+      errors.push('As senhas não conferem.');
+    }
+
+    if (
+      this.novaSenha &&
+      this.novaSenha.length < 8
+    ) {
+      errors.push(
+        'Senha deve ter ao menos 8 caracteres.'
+      );
+    }
+
+    return errors;
+  }
+
+  onSubmit(): void {
+
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const errors = this.validar();
+
+    if (errors.length) {
+
+      this.errorMessage = errors.join(' ');
+
+      return;
+    }
+
+    this.loading = true;
+
+    const email = this.email
+      .trim()
+      .toLowerCase();
+
+    this.usuarioService
+      .getUsuariosByEmail(email)
+      .subscribe({
+
+        next: (usuarios) => {
+
+          const usuario = usuarios?.[0];
+
+          if (!usuario?.id) {
+
+            this.loading = false;
+
+            this.errorMessage =
+              'E-mail não encontrado.';
+
+            return;
+          }
+
+          const atualizado = {
+            ...usuario,
+            senha: this.novaSenha
+          };
+
+          this.usuarioService
+            .updateUsuario(
+              Number(usuario.id),
+              atualizado
+            )
+            .subscribe({
+
+              next: () => {
+
+                this.loading = false;
+
+                this.successMessage =
+                  'Senha alterada com sucesso!';
+
+                setTimeout(() => {
+
+                  this.router.navigate(['/login']);
+
+                }, 1500);
+              },
+
+              error: (err) => {
+
+                console.error(err);
+
+                this.loading = false;
+
+                this.errorMessage =
+                  'Erro ao atualizar senha.';
+              }
+            });
+        },
+
+        error: (err) => {
+
+          console.error(err);
+
+          this.loading = false;
+
+          this.errorMessage =
+            'Erro ao buscar usuário.';
+        }
+      });
+  }
+}

@@ -1,0 +1,73 @@
+<div class="page">
+  <h2 class="title">Produtos</h2>
+
+  <div class="card filters">
+    <div class="field">
+      <label for="busca">Buscar por nome</label>
+      <input id="busca" type="text" [(ngModel)]="buscaNome" (input)="filtrarProdutos()" placeholder="Ex: Arroz" />
+    </div>
+
+    <div class="field">
+      <label for="marca">Filtrar por marca</label>
+      <select id="marca" [(ngModel)]="marcaFiltro" (change)="filtrarProdutos()">
+        <option value="">Todas</option>
+        @for (m of marcas; track m) {
+          <option [value]="m">{{ m }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+
+  <div class="table-wrap" *ngIf="!loading">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Marca</th>
+          <th>Data Fabricação</th>
+          <th>Data Validade</th>
+          <th>Preço</th>
+          <th>Estoque</th>
+
+          <th class="actions-col">Ações</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr
+          *ngFor="let p of produtosFiltrados"
+          [class.vencido]="isVencido(p)"
+        >
+          <td>{{ p.id }}</td>
+          <td>
+            <span class="name">{{ p.nome }}</span>
+            <span *ngIf="isVencido(p)" class="badge">Vencido</span>
+          </td>
+          <td>{{ p.marca }}</td>
+          <td>{{ p.dataFabricacao }}</td>
+          <td>{{ p.dataValidade }}</td>
+          <td class="price">{{ p.preco | currency:'BRL' }}</td>
+          <td>{{ p.quantidadeEstoque }}</td>
+
+          <td class="actions-col">
+            <button class="btn btn-edit" (click)="navegarEditar(p.id!)">Editar</button>
+            <button class="btn btn-delete" (click)="confirmarEExcluir(p.id!)">Excluir</button>
+
+
+
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="produtosFiltrados.length === 0" class="empty">
+      Nenhum produto encontrado com os filtros atuais.
+    </div>
+  </div>
+</div>
+

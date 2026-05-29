@@ -1,0 +1,35 @@
+<div class="page">
+  <h2 class="title">Detalhes do Produto</h2>
+
+  <div *ngIf="loading" class="card">Carregando...</div>
+
+  <div *ngIf="!loading && errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+  <div *ngIf="!loading && produto" class="card">
+    <div class="header">
+      <div>
+        <h3 class="name">{{ produto.nome }}</h3>
+        <p class="meta">Marca: <b>{{ produto.marca }}</b></p>
+      </div>
+
+      <div class="right">
+        <span class="price">{{ produto.preco | currency:'BRL' }}</span>
+        <span *ngIf="isVencido()" class="badge">Vencido</span>
+      </div>
+    </div>
+
+    <div class="details">
+      <div class="row"><span class="k">ID</span><span class="v">{{ produto.id }}</span></div>
+      <div class="row"><span class="k">Data de Fabricação</span><span class="v">{{ produto.dataFabricacao }}</span></div>
+      <div class="row"><span class="k">Data de Validade</span><span class="v">{{ produto.dataValidade }}</span></div>
+      <div class="row"><span class="k">Quantidade em Estoque</span><span class="v">{{ produto.quantidadeEstoque }}</span></div>
+    </div>
+
+
+    <div class="actions">
+      <button class="btn" (click)="voltar()">Voltar</button>
+      <a class="btn btn-edit" [routerLink]="['/edit', produto.id]">Editar</a>
+    </div>
+  </div>
+</div>
+

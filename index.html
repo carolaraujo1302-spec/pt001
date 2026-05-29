@@ -1,0 +1,202 @@
+import { Component } from '@angular/core';
+import { AuthService } from '../../services/auth.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+
+import { Usuario } from '../../models/usuario';
+import { UsuarioService } from '../../services/usuario.service';
+
+@Component({
+  selector: 'app-register-user',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './register-user.component.html',
+  styleUrl: './register-user.component.css'
+})
+export class RegisterUserComponent {
+  nome = '';
+  cpf = '';
+  email = '';
+  macroSetor = '';
+  status: 'ativo' | 'inativo' = 'ativo';
+  senha = '';
+  role: 'admin' | 'user' = 'user';
+
+
+  loading = false;
+  errorMessage = '';
+  successMessage = '';
+
+  constructor(
+    private usuarioService: UsuarioService,
+    private router: Router,
+    private auth: AuthService
+  ) { }
+
+  formatarCPF(): void {
+    this.cpf = this.cpf
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+      .substring(0, 14);
+  }
+
+  validar(): string[] {
+
+    const errors: string[] = [];
+
+    if (!this.nome.trim()) {
+      errors.push('Nome é obrigatório.');
+    }
+
+    if (!this.cpf.trim()) {
+      errors.push('CPF é obrigatório.');
+    }
+
+    if (!this.email.trim()) {
+      errors.push('Email é obrigatório.');
+    }
+
+    if (!this.macroSetor.trim()) {
+      errors.push('Região/Macro setor é obrigatório.');
+    }
+
+    if (!this.senha.trim()) {
+      errors.push('Senha é obrigatória.');
+    }
+
+    // CPF
+    const cpfRegex = /^\d{3}\.\d{3}\.\d{3}\-\d{2}$/;
+
+    if (this.cpf && !cpfRegex.test(this.cpf)) {
+
+      errors.push(
+        'CPF inválido. Use xxx.xxx.xxx-xx'
+      );
+    }
+
+    // EMAIL
+    const emailRegex =
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|com\.br|net|org|gov\.br|edu|edu\.br|store|tech|online|br)$/i;
+
+    if (this.email && !emailRegex.test(this.email)) {
+
+      errors.push('Email inválido.');
+    }
+
+    // SENHA
+    if (this.senha && this.senha.length < 8) {
+
+      errors.push(
+        'Senha deve ter ao menos 8 caracteres.'
+      );
+    }
+
+    return errors;
+  }
+
+  onSubmit(): void {
+
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const errors = this.validar();
+
+    if (errors.length) {
+
+      this.errorMessage = errors.join(' ');
+      return;
+    }
+
+    // PADRONIZA TEXTO
+    const nomeFormatado = this.nome
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .map(palavra =>
+        palavra.charAt(0).toUpperCase() +
+        palavra.slice(1)
+      )
+      .join(' ');
+
+    const macroSetorFormatado = this.macroSetor
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .map(palavra =>
+        palavra.charAt(0).toUpperCase() +
+        palavra.slice(1)
+      )
+      .join(' ');
+
+    const usuario: Usuario = {
+
+      // ID NUMÉRICO
+      id: Date.now(),
+
+      nome: nomeFormatado,
+
+      cpf: this.cpf.trim(),
+
+      email: this.email.trim().toLowerCase(),
+
+      macroSetor: macroSetorFormatado,
+
+      status: this.status,
+
+      criadoEm: new Date().toISOString(),
+
+      senha: this.senha,
+
+      role: this.role
+    };
+
+
+
+    this.loading = true;
+
+    this.usuarioService.createUsuario(usuario).subscribe({
+
+      next: () => {
+
+        this.successMessage =
+          'Usuário criado com sucesso!';
+
+        this.loading = false;
+
+        // SE QUEM ESTÁ LOGADO É ADMIN
+        if (this.auth.isAdmin()) {
+
+          setTimeout(() => {
+
+            this.router.navigate(['/users']);
+
+          }, 1000);
+
+          return;
+        }
+
+        // CADASTRO NORMAL
+        setTimeout(() => {
+
+          this.router.navigate(['/login']);
+
+        }, 1000);
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        this.errorMessage =
+          'Erro ao criar usuário.';
+
+        this.loading = false;
+      }
+    });
+  }
+}
+
+

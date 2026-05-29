@@ -1,0 +1,113 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+
+import { Produto } from '../../models/produto';
+import { ProdutoService } from '../../services/produto.service';
+
+@Component({
+  selector: 'app-produto-create',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './produto-create.component.html',
+  styleUrl: './produto-create.component.css'
+})
+export class ProdutoCreateComponent {
+  nome = '';
+  marca = '';
+  dataFabricacao = '';
+  dataValidade = '';
+  preco: number | null = null;
+  quantidadeEstoque: number | null = null;
+
+
+  loading = false;
+  errorMessage = '';
+  successMessage = '';
+
+  constructor(
+    private produtoService: ProdutoService,
+    private router: Router
+  ) { }
+
+  private validar(): string[] {
+    const errors: string[] = [];
+
+    if (!this.nome.trim()) errors.push('Nome é obrigatório.');
+    if (!this.marca.trim()) errors.push('Marca é obrigatória.');
+    if (!this.dataFabricacao) errors.push('Data de fabricação é obrigatória.');
+    if (!this.dataValidade) errors.push('Data de validade é obrigatória.');
+
+    if (this.preco === null || this.preco === undefined || Number.isNaN(this.preco)) {
+      errors.push('Preço é obrigatório.');
+    } else {
+      if (this.preco < 0) errors.push('Preço não pode ser negativo.');
+    }
+
+    if (this.quantidadeEstoque === null || this.quantidadeEstoque === undefined || Number.isNaN(this.quantidadeEstoque)) {
+      errors.push('Quantidade em estoque é obrigatória.');
+    } else {
+      if (this.quantidadeEstoque < 0) errors.push('Quantidade em estoque não pode ser negativa.');
+    }
+
+    if (this.dataFabricacao && this.dataValidade) {
+      const fabr = new Date(this.dataFabricacao);
+      const val = new Date(this.dataValidade);
+      if (val.getTime() <= fabr.getTime()) {
+        errors.push('Data de validade deve ser maior que a data de fabricação.');
+      }
+    }
+
+    return errors;
+  }
+  private formatarTexto(texto: string): string {
+
+    return texto
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .map(palavra =>
+        palavra.charAt(0).toUpperCase() + palavra.slice(1)
+      )
+      .join(' ');
+  }
+
+  onSubmit(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const errors = this.validar();
+    if (errors.length) {
+      this.errorMessage = errors.join(' ');
+      return;
+    }
+
+    // Montamos o payload sem id para garantir que o json-server gere um id numérico.
+    const produto: Omit<Produto, 'id'> = {
+      nome: this.formatarTexto(this.nome),
+      marca: this.formatarTexto(this.marca),
+      dataFabricacao: this.dataFabricacao,
+      dataValidade: this.dataValidade,
+      preco: Number(this.preco),
+      quantidadeEstoque: Number(this.quantidadeEstoque)
+    } as any;
+
+
+
+    this.loading = true;
+    this.produtoService.createProduto(produto).subscribe({
+      next: () => {
+        this.successMessage = 'Produto cadastrado com sucesso!';
+        this.loading = false;
+        setTimeout(() => this.router.navigate(['/']), 800);
+      },
+      error: (err) => {
+        console.error(err);
+        this.errorMessage = 'Erro ao cadastrar produto.';
+        this.loading = false;
+      }
+    });
+  }
+}
+
